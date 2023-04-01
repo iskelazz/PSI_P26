@@ -12,7 +12,7 @@
         android:id="@+id/editText_number_of_counts"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Número de cuentas"
+        android:hint="Number of accounts"
         android:inputType="number" />
 
     <Switch
@@ -44,6 +44,19 @@
         android:text="@string/set_button"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/switch_counter_bound" />
+
+    <Switch
+        android:id="@+id/switch_async_task"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/asyncTask" />
+
+    <TextView
+        android:id="@+id/textView_async_task_progress"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/asyncTask_progress" />
+
 
 
     <Button

@@ -11,29 +11,24 @@ import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.view.View;
-import android.widget.Button;
 import android.widget.CompoundButton;
-import android.widget.EditText;
-import android.widget.Switch;
 import android.widget.Toast;
 
+import es.udc.psi.databinding.ActivityMainBinding;
+
 public class MainActivity extends AppCompatActivity {
-    private Button buttonSendBroadcast;
-    private Switch switchStartStopService;
-    private EditText editTextNumberOfCounts;
     private MyBroadcastReceiver myBroadcastReceiver;
-    private Switch switchCounterBound;
-    private Button buttonGet;
-    private Button buttonSet;
-    private MyCounterService myCounterService;
     private boolean isBound = false;
+    private MyCounterService myCounterService;
+    private MyAsyncTask countingAsyncTask;
+    private ActivityMainBinding binding;
 
     private BroadcastReceiver counterFinishedReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (intent.getAction() != null && intent.getAction().equals("es.udc.psi.COUNTER_FINISHED")) {
-                switchStartStopService.setChecked(false);
-                switchCounterBound.setChecked(false);
+                binding.switchStartStopService.setChecked(false);
+                binding.switchCounterBound.setChecked(false);
             }
         }
     };
@@ -41,26 +36,20 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        binding = ActivityMainBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
 
-        buttonSendBroadcast = findViewById(R.id.button_send_broadcast);
-        switchStartStopService = findViewById(R.id.switch_start_stop_service);
-        editTextNumberOfCounts = findViewById(R.id.editText_number_of_counts);
-        switchCounterBound = findViewById(R.id.switch_counter_bound);
-        buttonGet = findViewById(R.id.button_get);
-        buttonSet = findViewById(R.id.button_set);
-
-        buttonSendBroadcast.setOnClickListener(new View.OnClickListener() {
+        binding.buttonSendBroadcast.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 sendCustomBroadcast();
             }
         });
-        switchStartStopService.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+        binding.switchStartStopService.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (isChecked) {
-                    int numberOfCounts = Integer.parseInt(editTextNumberOfCounts.getText().toString());
+                    int numberOfCounts = Integer.parseInt(binding.editTextNumberOfCounts.getText().toString());
                     Intent intent = new Intent(MainActivity.this, MyCounterService.class);
                     intent.putExtra("number_of_counts", numberOfCounts);
                     startService(intent);
@@ -77,12 +66,13 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        switchCounterBound.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+        binding.switchCounterBound.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (isChecked) {
                     Intent intent = new Intent(MainActivity.this, MyCounterService.class);
                     bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
+
                 } else {
                     if (isBound) {
                         unbindService(serviceConnection);
@@ -92,10 +82,10 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        buttonGet.setOnClickListener(new View.OnClickListener() {
+        binding.buttonGet.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (isBound) {
+                if (isBound && binding.switchCounterBound.isChecked()) {
                     int currentCount = myCounterService.getCurrentCount();
                     Toast.makeText(MainActivity.this, "Current count: " + currentCount, Toast.LENGTH_SHORT).show();
                 } else {
@@ -104,14 +94,29 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        buttonSet.setOnClickListener(new View.OnClickListener() {
+        binding.buttonSet.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (isBound) {
-                    int newCount = Integer.parseInt(editTextNumberOfCounts.getText().toString());
+                if (isBound && binding.switchCounterBound.isChecked()) {
+                    int newCount = Integer.parseInt(binding.editTextNumberOfCounts.getText().toString());
                     myCounterService.setFinalCount(newCount);
                 } else {
                     Toast.makeText(MainActivity.this, "Service is not bound", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+        binding.switchAsyncTask.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked) {
+                    int numberOfCounts = Integer.parseInt(binding.editTextNumberOfCounts.getText().toString());
+                    countingAsyncTask = new MyAsyncTask(binding.textViewAsyncTaskProgress, binding.switchAsyncTask);
+                    countingAsyncTask.execute(numberOfCounts);
+                } else {
+                    // Cancelar la tarea en segundo plano
+                    if (countingAsyncTask != null) {
+                        countingAsyncTask.cancel(true);
+                    }
                 }
             }
         });

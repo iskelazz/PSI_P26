@@ -1,8 +1,10 @@
 <resources>
     <string name="app_name">P26.Rivera</string>
-    <string name="tag_button">enviar emision propia</string>
-    <string name="ini_fin">Contar</string>
-    <string name="switch_two">Switch Enlazado</string>
+    <string name="tag_button">send own broadcast</string>
+    <string name="ini_fin">Count</string>
+    <string name="switch_two">Switch get/set</string>
     <string name="get_button">Get</string>
     <string name="set_button">Set</string>
+    <string name="asyncTask">AsyncTask</string>
+    <string name="asyncTask_progress">Progress: 0</string>
 </resources>

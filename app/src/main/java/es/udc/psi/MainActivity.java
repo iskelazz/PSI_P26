@@ -23,10 +23,9 @@ public class MainActivity extends AppCompatActivity {
     private EditText editTextNumberOfCounts;
     private MyBroadcastReceiver myBroadcastReceiver;
     private Switch switchCounterBound;
-
-    private MyCounterService myCounterService;
     private Button buttonGet;
     private Button buttonSet;
+    private MyCounterService myCounterService;
     private boolean isBound = false;
 
     private BroadcastReceiver counterFinishedReceiver = new BroadcastReceiver() {
@@ -50,13 +49,13 @@ public class MainActivity extends AppCompatActivity {
         switchCounterBound = findViewById(R.id.switch_counter_bound);
         buttonGet = findViewById(R.id.button_get);
         buttonSet = findViewById(R.id.button_set);
+
         buttonSendBroadcast.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 sendCustomBroadcast();
             }
         });
-
         switchStartStopService.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -65,13 +64,12 @@ public class MainActivity extends AppCompatActivity {
                     Intent intent = new Intent(MainActivity.this, MyCounterService.class);
                     intent.putExtra("number_of_counts", numberOfCounts);
                     startService(intent);
-                    if (!isBound) {
-                        bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
-                    }
+                    bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
                 } else {
                     if (isBound) {
-                        myCounterService.stopService();
-                        myCounterService.resetCounter();
+                        myCounterService.stopCounting();
+                        unbindService(serviceConnection);
+                        isBound = false;
                     }
                     Intent intent = new Intent(MainActivity.this, MyCounterService.class);
                     stopService(intent);
@@ -84,11 +82,9 @@ public class MainActivity extends AppCompatActivity {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (isChecked) {
                     Intent intent = new Intent(MainActivity.this, MyCounterService.class);
-                    if (!isBound) {
-                        bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
-                    }
+                    bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
                 } else {
-                    if (isBound && !switchStartStopService.isChecked()) {
+                    if (isBound) {
                         unbindService(serviceConnection);
                         isBound = false;
                     }
@@ -119,14 +115,12 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+        IntentFilter counterFinishedFilter = new IntentFilter("es.udc.psi.COUNTER_FINISHED");
+        registerReceiver(counterFinishedReceiver, counterFinishedFilter);
 
         myBroadcastReceiver = new MyBroadcastReceiver();
         IntentFilter filter = new IntentFilter("es.udc.PSI.broadcast.GENERAL");
         registerReceiver(myBroadcastReceiver, filter);
-
-        IntentFilter counterFinishedFilter = new IntentFilter("es.udc.psi.COUNTER_FINISHED");
-        registerReceiver(counterFinishedReceiver, counterFinishedFilter);
-        //bindService(new Intent(MainActivity.this, MyCounterService.class), serviceConnection, Context.BIND_AUTO_CREATE);
     }
 
     private ServiceConnection serviceConnection = new ServiceConnection() {
@@ -135,9 +129,6 @@ public class MainActivity extends AppCompatActivity {
             MyCounterService.MyBinder binder = (MyCounterService.MyBinder) service;
             myCounterService = binder.getService();
             isBound = true;
-            if (!switchStartStopService.isChecked()) {
-                myCounterService.stopService();
-            }
         }
 
         @Override
@@ -145,21 +136,20 @@ public class MainActivity extends AppCompatActivity {
             isBound = false;
         }
     };
-        @Override
-        protected void onDestroy() {
-            super.onDestroy();
-            unregisterReceiver(myBroadcastReceiver);
-            unregisterReceiver(counterFinishedReceiver);
-            if (isBound) {
-                unbindService(serviceConnection);
-                isBound = false;
-            }
-        }
 
-        private void sendCustomBroadcast() {
-            Intent intent = new Intent();
-            intent.setAction("es.udc.PSI.broadcast.GENERAL");
-            sendBroadcast(intent);
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        unregisterReceiver(counterFinishedReceiver);
+        if (isBound) {
+            unbindService(serviceConnection);
+            isBound = false;
         }
+    }
+
+    private void sendCustomBroadcast() {
+        Intent intent = new Intent();
+        intent.setAction("es.udc.PSI.broadcast.GENERAL");
+        sendBroadcast(intent);
+    }
 }
-

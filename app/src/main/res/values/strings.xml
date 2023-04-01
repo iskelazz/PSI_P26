@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">P26.Rivera</string>
+    <string name="tag_button">enviar emision propia</string>
+    <string name="ini_fin">Contar</string>
+    <string name="switch_two">Switch Enlazado</string>
+    <string name="get_button">Get</string>
+    <string name="set_button">Set</string>
 </resources>
